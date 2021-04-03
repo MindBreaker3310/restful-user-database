@@ -220,3 +220,40 @@ module.exports = router;
  ```
  
 9.增加express middleware (request -> middleware -> route handler)
+```js
+
+//驗證用戶是否登入
+const auth = async (req, res, next)=>{
+    try {
+        //用戶登入會傳一個token在header裡 >> { Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9....." }
+        const token = req.header('Authorization').replace('Bearer ', '')
+        //用公鑰'thisiskey'驗證token是否為真
+        const decoded = jwt.verify(token, 'thisiskey')
+        //並確認是否有登入token
+        const user = await User.findOne({_id:decoded._id, 'tokens.token':token})
+    
+        if(!user){
+            throw new Error('User沒有登入')
+        }
+        
+        //如果有，可以直接傳給router那邊，不用再次尋找該user
+        req.user = user;
+        req.token = token;
+        next()
+    
+    } catch (error) {
+        console.log(error);
+        res.status(401).send(error)
+    }
+}
+
+//查看User自己的檔案
+//get(path, middleware, callback)
+router.get('/users/me', auth, async (req, res) => {
+    try {
+        res.send(req.user);
+    } catch (error) {
+        res.status(500).send({ error: 'cauth error' });
+    }
+})
+ ```
