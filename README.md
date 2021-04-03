@@ -248,7 +248,7 @@ const auth = async (req, res, next)=>{
 }
 
 //查看User自己的檔案
-//get(path, middleware, callback)
+//(request -> middleware -> route handler)
 router.get('/users/me', auth, async (req, res) => {
     try {
         res.send(req.user);
@@ -257,3 +257,20 @@ router.get('/users/me', auth, async (req, res) => {
     }
 })
  ```
+
+10.隱藏私有資料
+```js
+//在user.js下
+
+//傳送密碼外的資料
+//toJSON的方法在JSON.stringify()裡都會呼叫
+//當router send()回客戶端時也會用JSON.stringify()，也就都會使用到toJSON了
+userSchema.methods.toJSON = function () {
+    const user = this;
+    const userObject = user.toObject()
+    delete userObject.password
+    delete userObject.tokens
+
+    return userObject
+}
+```
