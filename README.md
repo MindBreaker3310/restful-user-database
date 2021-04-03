@@ -180,7 +180,7 @@ module.exports = router;
      next()
  })
  ```
-6.對資料模型增加static function
+7.對資料模型增加static function
  ```js
  //在User.js下
  
@@ -198,7 +198,7 @@ module.exports = router;
      return user
  }
  ```
-7.對資料模型增加methods
+8.對資料模型增加methods
  ```js
  //在User.js下
  
@@ -219,4 +219,4 @@ module.exports = router;
  }
  ```
  
-8.增加express middleware (request -> middleware -> route handler)
+9.增加express middleware (request -> middleware -> route handler)
