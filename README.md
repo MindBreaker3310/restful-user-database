@@ -164,7 +164,22 @@ module.exports = router;
      }
  })
  ```
- 
+6.對資料模型增加middleware
+ ```js
+ //在save()前執行
+ userSchema.pre('save', async function (next) {
+
+     const user = this;
+
+     //isModified('key值') 檢查特定KEY值是否有被更改
+     if (user.isModified('password')) {
+         console.log('執行hash加密');
+         //若password有被更改，把password加密，用hash方法跑8次
+         user.password = await bcrypt.hash(user.password, 8);
+     }
+     next()
+ })
+ ```
 6.對資料模型增加static function
  ```js
  //在User.js下
