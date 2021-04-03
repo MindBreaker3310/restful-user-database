@@ -59,6 +59,7 @@
  const mongoose = require('mongoose');
  const validator = require('validator');
  const bcrypt = require('bcryptjs');
+ const jwt = require('jsonwebtoken')
 
  //建立一個User Schema(概要, 議程)
  const userSchema = new mongoose.Schema({
@@ -164,7 +165,7 @@ module.exports = router;
  })
  ```
  
-6.對資料模型增加功能
+6.對資料模型增加static function
  ```js
  //在User.js下
  
@@ -181,23 +182,26 @@ module.exports = router;
      }
      return user
  }
-
-
- //在save()前執行
- //把密碼加密後再傳到database去
- userSchema.pre('save', async function (next) {
-
+ ```
+7.對資料模型增加methods
+ ```js
+ //在User.js下
+ 
+ userSchema.methods.createAuthToken = async function () {
      const user = this;
+     const token = jwt.sign({ _id: user._id.toString() }, 'thisiskey');
+     //token如下被分為三段並用base64編碼加密過 私鑰為'thisiskey'
+     //eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiJhYmMxMjMiLCJpYXQiOjE2MTc0MzA1NjF9.QWgVHwyr2vBqXtAfpylDRb-3JS2TtR86svOhO3yQMak
+     //第一段.第二段.第三段
+     //第一段 就是header  >> {"alg":"HS256","typ":"JWT"}  alg演算法, typ格式
+     //第二段 我們傳的payload  >>  {"_id":"abc123","iat":1617428166} _id我們給的, iat(Issued at)創建的時間戳
+     //第三段 Signature
+     
+     user.tokens = user.tokens.concat({ token });
+     await user.save()
 
-     //isModified('key值') 檢查特定KEY值是否有被更改
-     if (user.isModified('password')) {
-         console.log('執行hash加密');
-         //若password有被更改，把password加密，用hash方法跑8次
-         user.password = await bcrypt.hash(user.password, 8);
-     }
-     next()
- })
+     return token
+ }
  ```
  
- 
- 
+8.增加express middleware (request -> middleware -> route handler)
