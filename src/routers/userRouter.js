@@ -6,12 +6,13 @@ const router = new express.Router();
 
 //創建 user
 router.post('/users', async (req, res) => {
+    //實現一個User的資料模型
+    const user = new User(req.body);
     try {
-        //實現一個User的資料模型
-        const user = new User(req.body);
         //儲存到database
         await user.save()
-        res.status(201).send(user);
+        const token = await user.createAuthToken()
+        res.status(201).send({ user, token });
 
     } catch (error) {
         res.status(404).send(erroe);
@@ -71,18 +72,18 @@ router.patch('/users/:id', async (req, res) => {
 })
 
 
-router.post('/users/login', async (req, res)=>{
+router.post('/users/login', async (req, res) => {
     try {
         //checkUserLogin()自己在user.js創的方法
         const user = await User.checkUserLogin(req.body.email, req.body.password)
+        const token = await user.createAuthToken();
         res.send(user)
     } catch (error) {
+        console.log(error);
         res.status(400).send(error)
     }
 })
 
 
 module.exports = router;
-
-
 

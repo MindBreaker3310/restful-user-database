@@ -2,6 +2,7 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken')
 
 //建立一個User Schema(概要, 議程)
 const userSchema = new mongoose.Schema({
@@ -41,8 +42,25 @@ const userSchema = new mongoose.Schema({
                 throw new Error('密碼裡面不能有password')
             }
         }
-    }
+    },
+    tokens:[{
+        token:{
+            type:String,
+            required:true
+        }
+    }]
 })
+
+
+userSchema.methods.createAuthToken = async function () {
+    const user = this;
+    const token = jwt.sign({ _id: user._id.toString() }, 'thisiskey');
+
+    user.tokens = user.tokens.concat({ token });
+    await user.save()
+
+    return token
+}
 
 //schema.statics 就像一個model的 static function
 userSchema.statics.checkUserLogin = async function (email, password) {
