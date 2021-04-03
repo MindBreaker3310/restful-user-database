@@ -53,5 +53,42 @@
  ```
 3. 建構資料模型
  ```js
+//在User.js下
 
+const mongoose = require('mongoose');
+const validator = require('validator');
+const bcrypt = require('bcryptjs');
+
+//建立一個User Schema(概要, 議程)
+const userSchema = new mongoose.Schema({
+    email: {
+        type: String,  //資料型別
+        unique: true,  //唯一性
+        required: true,  //是否為必須
+        trim: true,  //修剪多餘空格
+        lowercase: true,  //轉換成小寫
+        validate(value) {  //驗證輸入
+            //用validator library 的isEmail來驗證value是否為email格式
+            if (!validator.isEmail(value)) {
+                throw new Error('Email is invalid')
+            }
+        }
+    },
+    password: {
+        type: String,
+        required: true,
+        trim: true,
+        minLength: 6,  //最小長度
+        validate(value) {
+            if (value.toLowerCase().includes('password')) {
+                throw new Error('密碼裡面不能有password')
+            }
+        }
+    }
+})
+
+//建立一個資料模型
+const User = mongoose.model('User', userSchema)
+
+module.exports = User
  ```
