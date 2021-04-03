@@ -122,31 +122,9 @@ module.exports = router;
 
  ```
  
-5.增加路由
+5.新增路由
  ```js
- //回傳所有 user
- router.get('/users', async (req, res) => {
-     try {
-         const users = await User.find({})
-         res.status(201).send(users);
-     } catch (error) {
-         res.status(500).send(error);
-     }
- })
-
- //刪除 user
- router.delete('/users/:id', async (req, res) => {
-     try {
-         const user = await User.findByIdAndDelete(req.params.id)
-
-         if (!user) {
-             return res.status(404).send()
-         }
-         res.send(user)
-     } catch (error) {
-         res.status(500).send(error);
-     }
- })
+ //在userRouter.js下
 
  //修改 user
  router.patch('/users/:id', async (req, res) => {
