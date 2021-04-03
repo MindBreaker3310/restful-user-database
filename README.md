@@ -15,7 +15,7 @@
 - **bcrypt**：使用各種算法加密字串
 
 ## 📃筆記
-1. 開啟express
+1. 建構express
  ```js
  //在index.js下
  
@@ -44,8 +44,9 @@
 
  const express = require('express');
 
- //連結至資料庫address/資料庫
- mongoose.connect('mongodb://127.0.0.1:27017/task-manager-api', {
+ //連結至mongoDB address/資料庫
+ //user-manager為資料庫的名稱
+ mongoose.connect('mongodb://127.0.0.1:27017/user-manager', {
      useNewUrlParser: true,
      useCreateIndex: true,
      useUnifiedTopology: true
@@ -53,42 +54,172 @@
  ```
 3. 建構資料模型
  ```js
-//在User.js下
+ //在user.js下
 
-const mongoose = require('mongoose');
-const validator = require('validator');
-const bcrypt = require('bcryptjs');
+ const mongoose = require('mongoose');
+ const validator = require('validator');
+ const bcrypt = require('bcryptjs');
 
-//建立一個User Schema(概要, 議程)
-const userSchema = new mongoose.Schema({
-    email: {
-        type: String,  //資料型別
-        unique: true,  //唯一性
-        required: true,  //是否為必須
-        trim: true,  //修剪多餘空格
-        lowercase: true,  //轉換成小寫
-        validate(value) {  //驗證輸入
-            //用validator library 的isEmail來驗證value是否為email格式
-            if (!validator.isEmail(value)) {
-                throw new Error('Email is invalid')
-            }
-        }
-    },
-    password: {
-        type: String,
-        required: true,
-        trim: true,
-        minLength: 6,  //最小長度
-        validate(value) {
-            if (value.toLowerCase().includes('password')) {
-                throw new Error('密碼裡面不能有password')
-            }
-        }
+ //建立一個User Schema(概要, 議程)
+ const userSchema = new mongoose.Schema({
+     email: {
+         type: String,  //資料型別
+         unique: true,  //唯一性
+         required: true,  //是否為必須
+         trim: true,  //修剪多餘空格
+         lowercase: true,  //轉換成小寫
+         validate(value) {  //驗證輸入
+             //用validator library 的isEmail來驗證value是否為email格式
+             if (!validator.isEmail(value)) {
+                 throw new Error('Email is invalid')
+             }
+         }
+     },
+     password: {
+         type: String,
+         required: true,
+         trim: true,
+         minLength: 6,  //最小長度
+         validate(value) {
+             if (value.toLowerCase().includes('password')) {
+                 throw new Error('密碼裡面不能有password')
+             }
+         }
+     }
+ })
+
+ //建立一個資料模型
+ const User = mongoose.model('User', userSchema)
+
+ module.exports = User
+ ```
+4.建構路由
+ ```js
+ //在userRouter.js下
+ 
+const express = require('express');
+//資料模型(3. 建構資料模型)
+const User = require('../model/user.js');
+
+//實現一個express路由
+const router = new express.Router();
+
+//創建 user
+router.post('/users', async (req, res) => {
+    try {
+        //實現一個User的資料模型
+        const user = new User(req.body);
+        //儲存到database
+        await user.save()
+        res.status(201).send(user);
+
+    } catch (error) {
+        res.status(404).send(erroe);
     }
 })
 
-//建立一個資料模型
-const User = mongoose.model('User', userSchema)
+module.exports = router;
 
-module.exports = User
  ```
+ 
+5.增加路由
+ ```js
+ //回傳所有 user
+ router.get('/users', async (req, res) => {
+     try {
+         const users = await User.find({})
+         res.status(201).send(users);
+     } catch (error) {
+         res.status(500).send(error);
+     }
+ })
+
+ //刪除 user
+ router.delete('/users/:id', async (req, res) => {
+     try {
+         const user = await User.findByIdAndDelete(req.params.id)
+
+         if (!user) {
+             return res.status(404).send()
+         }
+         res.send(user)
+     } catch (error) {
+         res.status(500).send(error);
+     }
+ })
+
+ //修改 user
+ router.patch('/users/:id', async (req, res) => {
+     const updates = Object.keys(req.body)
+     const allowedUpdates = ['name', 'email', 'password', 'age']
+     const isValidOperation = updates.every((update) => allowedUpdates.includes(update))
+
+     if (!isValidOperation) {
+         return res.status(400).send({ error: 'Invalid updates!' })
+     }
+
+     try {
+         //直接更新的方法
+         //new:true 會回傳更新後的數值而非更新前的值
+         // const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+
+         //如要更改密碼，需要先hash加密密碼再儲存到database
+         const user = await User.findById(req.params.id);
+         updates.forEach((update) => user[update] = req.body[update])
+         
+         //save前會執行(6.對資料模型增加功能)的userSchema.pre
+         await user.save()
+         res.send(user);
+     } catch (error) {
+         res.status(500).send(error);
+     }
+ })
+
+ router.post('/users/login', async (req, res)=>{
+     try {
+         //checkUserLogin()自己在user.js創的方法
+         const user = await User.checkUserLogin(req.body.email, req.body.password)
+         res.send(user)
+     } catch (error) {
+         res.status(400).send(error)
+     }
+ })
+ ```
+ 
+6.對資料模型增加功能
+ ```js
+ //在User.js下
+ 
+ //schema.statics 就是一個資料模型的 static functione
+ //checkUserLogin(自定義) 用於驗證登入帳密是否正確，並回傳用戶訊息。
+ userSchema.statics.checkUserLogin = async function (email, password) {
+     const user = await this.findOne({ email })
+     if (!user) {
+         throw new Error('找不到EMAIL，無法登入')
+     }
+     const isMatch = await bcrypt.compare(password, user.password);
+     if (!isMatch) {
+         throw new Error('密碼錯誤，無法登入')
+     }
+     return user
+ }
+
+
+ //在save()前執行
+ //把密碼加密後再傳到database去
+ userSchema.pre('save', async function (next) {
+
+     const user = this;
+
+     //isModified('key值') 檢查特定KEY值是否有被更改
+     if (user.isModified('password')) {
+         console.log('執行hash加密');
+         //若password有被更改，把password加密，用hash方法跑8次
+         user.password = await bcrypt.hash(user.password, 8);
+     }
+     next()
+ })
+ ```
+ 
+ 
+ 
