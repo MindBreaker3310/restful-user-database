@@ -353,3 +353,12 @@ userSchema.virtual('accounts', {
      }
  })
  ```
+14.當刪除User時，連帶刪除他的Account
+ ```js
+ //在remove()前執行
+ userSchema.pre('remove', async function (next) {
+     const user = this;
+     await Account.deleteMany({ owner: user._id });
+     next()
+ })
+ ```
