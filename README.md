@@ -274,3 +274,82 @@ userSchema.methods.toJSON = function () {
     return userObject
 }
 ```
+
+11.創建 account
+ ```js
+//在accountRouter.js下
+
+//創建 account
+router.post('/accounts/create', auth, async (req, res) => {
+    //實現一個Account的資料模型
+    const account = new Account({
+        ...req.body, //其他來自body的參數 { "deposit" : 0, "loan" : 0, "description" : "my bank account :))" }
+        owner: req.user._id  //來自User的user._id
+    });
+    try {
+        await account.save()
+        res.status(201).send(account);
+    } catch (error) {
+        res.status(404).send(error);
+    }
+})
+ ```
+
+12.透過onwer對 user collection搜尋
+ ```js
+
+//在account.js下
+
+const Account = mongoose.model('Account', {
+    owner: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: 'User'
+    },
+})
+
+//練習account -> user
+const Account = require('./model/account.js')
+const myFunction = async ()=>{
+    //用account collection的_id去搜尋
+    const account = await Account.findById('60694dce4523e4590c6f92be')
+    
+    //populate('owner')可以用owner作為外鍵搜尋，並暫時儲存到owner欄位裡(還沒save()到database)
+    await account.populate('owner').execPopulate()//加上.execPopulate()則是回傳Promise，不加是callback
+    
+    //此時account有 _id === owner的User資料
+    console.log(account);
+}
+myFunction()
+
+ ```
+
+
+13.透過user._id對 account collection搜尋
+ ```js
+//在user.js下
+
+//建立一個虛擬欄位accounts ，並不會真的儲存到user collection，而是參照到其他collection
+userSchema.virtual('accounts', {
+    ref: 'Account',
+    localField: '_id',
+    foreignField: 'owner'
+})
+
+ //在account.js下
+ 
+ //回傳自己所有的account
+ router.get('/accounts/me', auth, async (req, res) => {
+     try {
+         // 直接從Account collection 找的方法
+         // const account = await Account.findOne({ owner: req.user._id })
+
+         //populate('accounts')用建立的虛擬欄位'accounts'作為外鍵搜尋，並暫時儲存到accounts欄位裡(還沒save()到database)
+         await req.user.populate('accounts').execPopulate()  //加上.execPopulate()則是回傳Promise，不加是callback
+         res.send(req.user.accounts);  //此時user.accounts有所有account.owner === user._id 的Account
+     } catch (error) {
+         console.log(error);
+         res.status(500).send('error');
+     }
+ })
+ ```
