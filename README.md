@@ -362,3 +362,25 @@ userSchema.virtual('accounts', {
      next()
  })
  ```
+15.用req.query來搜尋年齡在範圍內的User
+```js
+ //回傳所有 users/all?morethan=20&lessthan=50
+ router.get('/users/all', async (req, res) => {
+     const match = {
+         morethan: 0,
+         lessthan: Number.MAX_SAFE_INTEGER
+     }
+     if (req.query.morethan) {
+         match.morethan = +req.query.morethan//因為url的query都是String所以要加一個+號轉成數字
+     }
+     if (req.query.lessthan) {
+         match.lessthan = +req.query.lessthan
+     }
+     try {
+         const users = await User.find({}).where('age').gt(match.morethan).lt(match.lessthan)//搜尋所以age在範圍內的User
+         res.send(users);
+     } catch (error) {
+         res.status(500).send(error);
+     }
+ })
+```
