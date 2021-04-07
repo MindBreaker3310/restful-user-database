@@ -385,16 +385,16 @@ userSchema.virtual('accounts', {
  })
 ```
 
-16.上傳檔案
+16.上傳檔案(上傳USER大頭貼)
 在user model新增avatar欄位
 ```js
+//在user.js下
 avatar:{//大頭貼
         type:Buffer //儲存二進位的資料
     }
-```
-安裝multer library方便管理上傳檔案
-```js
+    
 //在userRouter.js下
+//安裝multer library方便管理上傳檔案
 const multer = require('multer')
 const avatar = multer({
     //dest: 'avatar/',  //檔案儲存的路徑 不填就是在req.file.buffer
