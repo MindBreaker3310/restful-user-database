@@ -384,3 +384,35 @@ userSchema.virtual('accounts', {
      }
  })
 ```
+
+16.上傳檔案
+在user model新增avatar欄位
+```js
+avatar:{//大頭貼
+        type:Buffer //儲存二進位的資料
+    }
+```
+安裝multer library方便管理上傳檔案
+```js
+//在userRouter.js下
+const multer = require('multer')
+const avatar = multer({
+    //dest: 'avatar/',  //檔案儲存的路徑 不填就是在req.file.buffer
+    limits: {
+        fileSize: 1000000  //檔案最大不能超過1MB
+    },
+    fileFilter(req, file, callback) {
+        if (!file.originalname.match(/\.(jpg|gif)$/)) {
+            callback(new Error('檔案只能傳送.jpg .gif'))
+        }
+        callback(undefined, true) //callback(error: null, acceptFile: boolean)
+    }
+})
+router.post('/user/me/avatar', auth, avatar.single('payload'), async (req, res) => {
+    req.user.avatar = req.file.buffer
+    await req.user.save()
+    res.send()
+}, (error, req, res, next) => {
+    res.status(400).send({ error: error.message })
+})
+```
