@@ -15,12 +15,12 @@
 - **bcrypt**：使用各種算法加密字串
 
 ## ▶使用方法
-***啟動資料庫***
+***啟動資料庫與localhost***
+***{{url}} = localhost:3000***
 ```bash
 D:/mongodb/bin/mongod.exe --dbpath=D:/mongodb-data
 npm run dev
 ```
-***{{url}} = localhost:3000***
 - **創建USER**：POST {{url}}/users/create
 ```json
 //request.body
