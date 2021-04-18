@@ -14,6 +14,68 @@
 - **validator**：方便驗證字串是否符合形式
 - **bcrypt**：使用各種算法加密字串
 
+## ▶使用方法
+***啟動資料庫***
+```bash
+D:/mongodb/bin/mongod.exe --dbpath=D:/mongodb-data
+npm run dev
+```
+***{{url}} = localhost:3000***
+- **創建USER**：POST {{url}}/users/create
+```json
+//request.body
+{
+    "name": "max",
+    "age": 2,
+    "email": "email@gmail.com",
+    "password": "thisispwd"
+}
+```
+- **創建Account**：POST {{url}}/accounts/create (需要先登入)
+```json
+//request.body
+{
+    "deposit" : 0,
+    "description": "my bank account :))"
+}
+```
+- **USER登入**：POST {{url}}/users/login
+```json
+//request.body
+{
+    "email": "email@gmail.com",
+    "password": "thisispwd"
+}
+```
+- **上傳USER大頭貼**：POST {{url}}/user/me/avatar
+```js
+//request.body
+//使用form-data 非json
+let formData = new FormData();
+formData.append('payload', {{大頭貼.jpg的二進制}});
+
+```
+- **USER登出**：GET {{url}}/users/logout (需要先登入)
+- **USER登出所有裝置**：GET {{url}}/users/logoutAll (需要先登入)
+- **USER取得自身的個人訊息**：GET {{url}}/users/me
+- **USER取得自身的Account**：GET {{url}}/accounts/me
+- **刪除USER**：DELETE {{url}}/accounts/me (需要先登入)(會連帶刪除USER的Account)
+- **刪除USER**：DELETE {{url}}/accounts/{{Account的ID}} (需要先登入)
+- **刪除USER大頭貼**：DELETE {{url}}/user/me/avatar (需要先登入)
+- **更新USER資料**：PATCH {{url}}/users/me (需要先登入)
+```json
+//request.body
+{
+    "age":"25"
+}
+```
+- **對指定Account存提款**：PATCH {{url}}/accounts/deal/{{Account的ID}} (需要先登入)
+```json
+{
+    "deposit": 500,
+    "withdraw": 300
+}
+```
 ## 📃筆記
 1. 建構express
  ```js
