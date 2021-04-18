@@ -15,7 +15,8 @@
 - **bcrypt**：使用各種算法加密字串
 
 ## ▶使用方法
-***啟動資料庫與localhost***
+***啟動資料庫與localhost***   
+
 ***{{url}} = localhost:3000***
 ```bash
 D:/mongodb/bin/mongod.exe --dbpath=D:/mongodb-data
